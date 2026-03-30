@@ -21,8 +21,8 @@ window.switchView = (view) => {
     document.getElementById('btnExpenses').classList.toggle('active', view === 'expenses');
     document.getElementById('btnSales').classList.toggle('active', view === 'sales');
     
-    document.getElementById('expenses-view').style.display = (view === 'expenses') ? 'block' : 'none';
-    document.getElementById('sales-view').style.display = (view === 'sales') ? 'block' : 'none';
+    document.getElementById('expenses-view').style.display = (view === 'expenses') ? 'flex' : 'none';
+    document.getElementById('sales-view').style.display = (view === 'sales') ? 'flex' : 'none';
     document.getElementById('addBtn').style.display = (view === 'expenses') ? 'flex' : 'none';
 
     if (view === 'sales' && !isSalesLoaded) {
