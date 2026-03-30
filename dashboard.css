@@ -44,6 +44,13 @@ body {
     gap: 2rem;
 }
 
+#expenses-view, #sales-view {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+
 /* Header */
 .dashboard-header {
     display: flex;

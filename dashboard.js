@@ -54,8 +54,13 @@ const processSalesAndRender = () => {
         totalQty += s.quantity;
 
         // Customer aggregate
-        if(!customerMap[s.customer]) customerMap[s.customer] = 0;
-        customerMap[s.customer] += s.amount;
+        let custName = s.customer.trim();
+        if (custName.toLowerCase() === 'partha ghosh') {
+            custName = 'Priyanshu Mistanno Vander';
+        }
+        
+        if(!customerMap[custName]) customerMap[custName] = 0;
+        customerMap[custName] += s.amount;
 
         // Product aggregate
         if(!productMap[s.product]) productMap[s.product] = { qty: 0, amt: 0 };
