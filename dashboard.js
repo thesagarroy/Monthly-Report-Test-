@@ -6,6 +6,20 @@ let barChartInstance = null;
 let activeCategory = null;
 let categoryRanks = {};
 let currentView = 'expenses';
+let toastTimeout = null;
+
+// Toast Logic
+const showToast = (message, isError = false) => {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.className = `toast show ${isError ? 'toast-error' : 'toast-success'}`;
+    toast.innerHTML = isError ? `<i class="fas fa-exclamation-circle" style="color:var(--accent-red)"></i> ${message}` : `<i class="fas fa-check-circle" style="color:var(--accent-green)"></i> ${message}`;
+    
+    if (toastTimeout) clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+        toast.className = 'toast';
+    }, 3000);
+};
 
 // Basic Configurations
 Chart.defaults.color = '#94a3b8';
@@ -42,7 +56,7 @@ const fetchSalesData = async () => {
         processSalesAndRender();
     } catch (e) {
         console.error("Error fetching sales data", e);
-        alert("Failed to load sales data. Did you run the python script?");
+        showToast("Failed to load sales data.", true);
     }
 };
 
@@ -213,7 +227,7 @@ const fetchData = async () => {
         processAndRender();
     } catch (error) {
         console.error("Error fetching data:", error);
-        alert("Failed to load data. Ensure api.php and data.json are working.");
+        showToast("Failed to load expenses data.", true);
     }
 };
 
@@ -445,7 +459,11 @@ window.deleteExpense = async (id) => {
         const prevTransactions = [...transactions]; 
         transactions = transactions.filter(t => t.id !== id);
         const success = await saveToServer();
-        if(!success) transactions = prevTransactions;
+        if(!success) {
+            transactions = prevTransactions;
+        } else {
+            showToast("Expense deleted successfully.");
+        }
     }
 };
 
@@ -478,6 +496,8 @@ const saveExpense = async (e) => {
     if(!success) {
         transactions = prevTransactions; // rollback on fail
         processAndRender();
+    } else {
+        showToast("Expense saved successfully.");
     }
 };
 
@@ -493,12 +513,12 @@ const saveToServer = async () => {
             processAndRender();
             return true;
         } else {
-            alert('Failed to save to server: ' + result.message);
+            showToast('Failed to save to server: ' + result.message, true);
             return false;
         }
     } catch (e) {
         console.error(e);
-        alert('Server connection error. Could not save.');
+        showToast('Server connection error. Could not save.', true);
         return false;
     }
 };
@@ -552,6 +572,7 @@ window.deleteSale = async (id) => {
             salesData = prevSales;
         } else {
             processSalesAndRender();
+            showToast("Sale deleted successfully.");
         }
     }
 };
@@ -586,6 +607,8 @@ const saveSale = async (e) => {
     const success = await saveSalesToServer();
     if(!success) {
         salesData = prevSales;
+    } else {
+        showToast("Sale saved successfully.");
     }
     processSalesAndRender();
 };
@@ -601,12 +624,12 @@ const saveSalesToServer = async () => {
         if(result.status === 'success') {
             return true;
         } else {
-            alert('Failed to save to server: ' + result.message);
+            showToast('Failed to save to server: ' + result.message, true);
             return false;
         }
     } catch (e) {
         console.error(e);
-        alert('Server connection error. Could not save.');
+        showToast('Server connection error. Could not save.', true);
         return false;
     }
 };
