@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>March 2026 Expense Report</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="dark-theme">
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div>
+                <h1>March 2026 Expense Report</h1>
+                <p>Comprehensive transaction and categorized spending overview</p>
+            </div>
+            <div class="user-profile">
+                <i class="fas fa-wallet"></i> ARSR
+            </div>
+        </header>
+
+        <!-- Summary KPI Cards -->
+        <div class="kpi-grid">
+            <div class="card kpi-card">
+                <div class="kpi-icon"><i class="fas fa-indian-rupee-sign"></i></div>
+                <div class="kpi-info">
+                    <h3>Total Expenses</h3>
+                    <h2 id="total-amount">₹0.00</h2>
+                </div>
+            </div>
+            <div class="card kpi-card">
+                <div class="kpi-icon" style="background: rgba(46, 204, 113, 0.1); color: #2ecc71;"><i class="fas fa-chart-line"></i></div>
+                <div class="kpi-info">
+                    <h3>Total Transactions</h3>
+                    <h2 id="total-transactions">0</h2>
+                </div>
+            </div>
+            <div class="card kpi-card">
+                <div class="kpi-icon" style="background: rgba(155, 89, 182, 0.1); color: #9b59b6;"><i class="fas fa-crown"></i></div>
+                <div class="kpi-info">
+                    <h3>Top Category</h3>
+                    <h2 id="top-category">-</h2>
+                </div>
+            </div>
+            <div class="card kpi-card">
+                <div class="kpi-icon" style="background: rgba(231, 76, 60, 0.1); color: #e74c3c;"><i class="fas fa-calendar-alt"></i></div>
+                <div class="kpi-info">
+                    <h3>Largest Spending Day</h3>
+                    <h2 id="peak-day">-</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Charts Section -->
+        <div class="charts-grid">
+            <div class="card chart-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-chart-pie"></i> Expenses by Category</h3>
+                </div>
+                <div class="chart-container pie-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="card chart-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-chart-bar"></i> Spending Timeline</h3>
+                </div>
+                <div class="chart-container bar-container">
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transactions Table -->
+        <div class="card table-card">
+            <div class="card-header">
+                <h3><i class="fas fa-list"></i> Recent Transactions</h3>
+                <input type="text" id="searchInput" placeholder="Search transactions..." class="search-input">
+            </div>
+            <div id="category-filters" class="category-filters">
+                <!-- Chips will be appended here -->
+            </div>
+            <div class="table-responsive">
+                <table id="transactionsTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Name</th>
+                            <th>Amount (₹)</th>
+                            <th style="width: 80px; text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Data will be injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Add Button -->
+    <button class="fab-btn" id="addBtn" onclick="openModal('add')">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- Add/Edit Modal -->
+    <div id="expenseModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Expense</h2>
+                <button class="close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-content">
+                <form id="expenseForm">
+                    <input type="hidden" id="editIndex" value="">
+                    
+                    <div class="form-group">
+                        <label for="dateInput">Date</label>
+                        <input type="date" id="dateInput" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="categoryInput">Category</label>
+                        <input type="text" id="categoryInput" list="categoryOptions" placeholder="E.g., Salary, EMI, Savings" required autocomplete="off">
+                        <datalist id="categoryOptions">
+                            <!-- Populated dynamically -->
+                        </datalist>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="nameInput">Name / Description</label>
+                        <input type="text" id="nameInput" placeholder="Name or short description" required autocomplete="off">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="amountInput">Amount (₹)</label>
+                        <input type="number" id="amountInput" placeholder="Enter amount" required autocomplete="off" min="0" step="0.01">
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="saveExpenseBtn"><i class="fas fa-save"></i> Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Logic -->
+    <!-- Removed data.js import since we fetch from api.php -->
+    <script src="dashboard.js"></script>
+</body>
+</html>
