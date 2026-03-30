@@ -25,6 +25,13 @@
             </div>
         </header>
 
+        <!-- View Toggle Buttons -->
+        <div class="view-toggle">
+            <button id="btnExpenses" class="toggle-btn active" onclick="switchView('expenses')"><i class="fas fa-wallet"></i> Expenses</button>
+            <button id="btnSales" class="toggle-btn" onclick="switchView('sales')"><i class="fas fa-chart-line"></i> Sales</button>
+        </div>
+
+        <div id="expenses-view">
         <!-- Summary KPI Cards -->
         <div class="kpi-grid">
             <div class="card kpi-card">
@@ -103,7 +110,62 @@
                     </tbody>
                 </table>
             </div>
+            </div>
         </div>
+        </div> <!-- End of Expenses View -->
+
+        <div id="sales-view" style="display: none;">
+            <!-- Sales Summary KPI Cards -->
+            <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                <div class="card kpi-card">
+                    <div class="kpi-icon" style="background: rgba(46, 204, 113, 0.1); color: #2ecc71;"><i class="fas fa-indian-rupee-sign"></i></div>
+                    <div class="kpi-info">
+                        <h3>Total Sales Amount</h3>
+                        <h2 id="total-sales-amount" style="color: #2ecc71;">₹0.00</h2>
+                    </div>
+                </div>
+                <div class="card kpi-card">
+                    <div class="kpi-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;"><i class="fas fa-box"></i></div>
+                    <div class="kpi-info">
+                        <h3>Total Quantity Sold</h3>
+                        <h2 id="total-sales-qty" style="color: #3b82f6;">0</h2>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <!-- Top 15 Customers List -->
+                <div class="card chart-card" style="max-height: 450px; overflow-y: auto;">
+                    <div class="card-header">
+                        <h3><i class="fas fa-crown" style="color: gold;"></i> Top 15 Customers</h3>
+                    </div>
+                    <div class="chart-container" id="top-customers-list" style="padding: 0 1rem;">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Product Wise Sales Table -->
+                <div class="card chart-card" style="max-height: 450px; overflow-y: auto;">
+                    <div class="card-header">
+                        <h3><i class="fas fa-tags"></i> Product Wise Sales</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="product-sales-table" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border-color);">
+                                    <th style="padding: 1rem; text-align: left; color: var(--text-muted);">Product Name</th>
+                                    <th style="padding: 1rem; text-align: center; color: var(--text-muted);">Quantity</th>
+                                    <th style="padding: 1rem; text-align: right; color: var(--text-muted);">Total Sale (₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="product-sales-body">
+                                <!-- Injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- End of Sales View -->
     </div>
 
     <!-- Floating Add Button -->

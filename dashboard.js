@@ -1,17 +1,109 @@
 let transactions = [];
+let salesData = [];
+let isSalesLoaded = false;
 let pieChartInstance = null;
 let barChartInstance = null;
 let activeCategory = null;
 let categoryRanks = {};
+let currentView = 'expenses';
 
 // Basic Configurations
 Chart.defaults.color = '#94a3b8';
 Chart.defaults.font.family = "'Outfit', sans-serif";
 
 document.addEventListener('DOMContentLoaded', () => {
-    fetchData();
+    fetchData(); // Expenses
     setupEventListeners();
 });
+
+window.switchView = (view) => {
+    currentView = view;
+    document.getElementById('btnExpenses').classList.toggle('active', view === 'expenses');
+    document.getElementById('btnSales').classList.toggle('active', view === 'sales');
+    
+    document.getElementById('expenses-view').style.display = (view === 'expenses') ? 'block' : 'none';
+    document.getElementById('sales-view').style.display = (view === 'sales') ? 'block' : 'none';
+    document.getElementById('addBtn').style.display = (view === 'expenses') ? 'flex' : 'none';
+
+    if (view === 'sales' && !isSalesLoaded) {
+        fetchSalesData();
+    }
+};
+
+const fetchSalesData = async () => {
+    try {
+        const response = await fetch('sales_data.json');
+        salesData = await response.json();
+        isSalesLoaded = true;
+        processSalesAndRender();
+    } catch (e) {
+        console.error("Error fetching sales data", e);
+        alert("Failed to load sales data. Did you run the python script?");
+    }
+};
+
+const processSalesAndRender = () => {
+    let totalSales = 0;
+    let totalQty = 0;
+    
+    const customerMap = {};
+    const productMap = {};
+
+    salesData.forEach(s => {
+        totalSales += s.amount;
+        totalQty += s.quantity;
+
+        // Customer aggregate
+        if(!customerMap[s.customer]) customerMap[s.customer] = 0;
+        customerMap[s.customer] += s.amount;
+
+        // Product aggregate
+        if(!productMap[s.product]) productMap[s.product] = { qty: 0, amt: 0 };
+        productMap[s.product].qty += s.quantity;
+        productMap[s.product].amt += s.amount;
+    });
+
+    const formatCurrency = (amount) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
+
+    document.getElementById('total-sales-amount').innerText = formatCurrency(totalSales);
+    document.getElementById('total-sales-qty').innerText = totalQty;
+
+    // Top 15 Customers
+    const sortedCustomers = Object.entries(customerMap).sort((a,b) => b[1] - a[1]).slice(0, 15);
+    const topCustContainer = document.getElementById('top-customers-list');
+    topCustContainer.innerHTML = '';
+    
+    sortedCustomers.forEach((cust, index) => {
+        const item = document.createElement('div');
+        item.className = 'customer-rank-item';
+        let rankClass = 'rank-other';
+        if(index === 0) rankClass = 'rank-1';
+        else if(index === 1) rankClass = 'rank-2';
+        else if(index === 2) rankClass = 'rank-3';
+        
+        item.innerHTML = `
+            <div class="rank-index ${rankClass}">${index + 1}</div>
+            <div class="customer-name">${cust[0]}</div>
+            <div class="customer-amount">${formatCurrency(cust[1])}</div>
+        `;
+        topCustContainer.appendChild(item);
+    });
+
+    // Product Wise Table
+    const sortedProducts = Object.entries(productMap).sort((a,b) => b[1].amt - a[1].amt);
+    const prodTbody = document.getElementById('product-sales-body');
+    prodTbody.innerHTML = '';
+    
+    sortedProducts.forEach(prod => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${prod[0]}</td>
+            <td style="text-align: center;">${prod[1].qty}</td>
+            <td style="text-align: right; color: #fca5a5; font-weight: 500;">${formatCurrency(prod[1].amt)}</td>
+        `;
+        prodTbody.appendChild(tr);
+    });
+};
 
 const fetchData = async () => {
     try {
