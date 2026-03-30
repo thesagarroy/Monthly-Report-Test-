@@ -44,14 +44,22 @@ const fetchSalesData = async () => {
 
 const processSalesAndRender = () => {
     let totalSales = 0;
-    let totalQty = 0;
+    let totalBoxes = 0;
+    let totalPcs = 0;
     
     const customerMap = {};
     const productMap = {};
 
     salesData.forEach(s => {
         totalSales += s.amount;
-        totalQty += s.quantity;
+        
+        // Pcs vs Box logic (20 LTR and 5 LTR are Pcs, rest are Boxes)
+        const pName = s.product.toUpperCase();
+        if (pName.includes('20 LTR') || pName.includes('5 LTR')) {
+            totalPcs += s.quantity;
+        } else {
+            totalBoxes += s.quantity;
+        }
 
         // Customer aggregate
         let custName = s.customer.trim();
@@ -71,7 +79,8 @@ const processSalesAndRender = () => {
     const formatCurrency = (amount) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
 
     document.getElementById('total-sales-amount').innerText = formatCurrency(totalSales);
-    document.getElementById('total-sales-qty').innerText = totalQty;
+    document.getElementById('total-sales-boxes').innerText = totalBoxes;
+    document.getElementById('total-sales-pcs').innerText = totalPcs;
 
     // Top 15 Customers
     const sortedCustomers = Object.entries(customerMap).sort((a,b) => b[1] - a[1]).slice(0, 15);
@@ -95,19 +104,40 @@ const processSalesAndRender = () => {
     });
 
     // Product Wise Table
-    const sortedProducts = Object.entries(productMap).sort((a,b) => b[1].amt - a[1].amt);
+    // Sort logic based on Volume (ML to LTR)
+    const getVol = (name) => {
+        const match = name.match(/(\d+)\s*(ML|LTR)/i);
+        if (!match) return 0;
+        let val = parseInt(match[1]);
+        if (match[2].toUpperCase() === 'LTR') val *= 1000;
+        return val;
+    };
+
+    const sortedProducts = Object.entries(productMap).sort((a,b) => getVol(a[0]) - getVol(b[0]));
     const prodTbody = document.getElementById('product-sales-body');
     prodTbody.innerHTML = '';
     
-    sortedProducts.forEach(prod => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${prod[0]}</td>
-            <td style="text-align: center;">${prod[1].qty}</td>
-            <td style="text-align: right; color: #fca5a5; font-weight: 500;">${formatCurrency(prod[1].amt)}</td>
-        `;
-        prodTbody.appendChild(tr);
-    });
+    const renderBrandGroup = (brandName, icon, color) => {
+        const products = sortedProducts.filter(p => p[0].toUpperCase().includes(brandName));
+        if (products.length === 0) return;
+
+        const headerTr = document.createElement('tr');
+        headerTr.innerHTML = `<td colspan="3" style="font-weight: bold; color: ${color}; padding-top: 1.5rem; padding-bottom: 0.5rem; font-size: 1.1rem; border-bottom: 2px solid var(--border-color);"><i class="${icon}"></i> ${brandName} Water</td>`;
+        prodTbody.appendChild(headerTr);
+
+        products.forEach(prod => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="padding-left: 1.5rem;"><i class="fas fa-caret-right" style="color: var(--text-muted); margin-right: 5px;"></i> ${prod[0]}</td>
+                <td style="text-align: center;">${prod[1].qty}</td>
+                <td style="text-align: right; color: #fca5a5; font-weight: 500;">${formatCurrency(prod[1].amt)}</td>
+            `;
+            prodTbody.appendChild(tr);
+        });
+    };
+
+    renderBrandGroup('BIPRAJ', 'fas fa-tint', '#3b82f6');
+    renderBrandGroup('BISLAIM', 'fas fa-bottle-water', '#2ecc71');
 };
 
 const fetchData = async () => {
