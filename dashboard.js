@@ -2,6 +2,7 @@ let transactions = [];
 let pieChartInstance = null;
 let barChartInstance = null;
 let activeCategory = null;
+let categoryRanks = {};
 
 // Basic Configurations
 Chart.defaults.color = '#94a3b8';
@@ -60,11 +61,14 @@ const processAndRender = () => {
         dateMap[d] += amt;
     });
 
-    // Top Category
-    let topCategory = "-"; let maxCatVal = 0;
-    for (const [cat, val] of Object.entries(categoryMap)) {
-        if (val > maxCatVal) { maxCatVal = val; topCategory = cat; }
-    }
+    // Top Category & Populate Ranks
+    const sortedCats = Object.keys(categoryMap).sort((a,b) => categoryMap[b] - categoryMap[a]);
+    categoryRanks = {};
+    sortedCats.forEach((cat, index) => {
+        categoryRanks[cat] = index + 1;
+    });
+
+    let topCategory = sortedCats.length > 0 ? sortedCats[0] : "-";
 
     // Peak Day
     let peakDay = "-"; let maxDayVal = 0;
@@ -143,10 +147,11 @@ const renderChipsAndTable = (categoryMap) => {
         allChip.addEventListener('click', () => { activeCategory = null; renderLocalChips(); applyFilters(); });
         filterContainer.appendChild(allChip);
 
-        categories.forEach((cat, index) => {
+        categories.forEach((cat) => {
             const chip = document.createElement('div');
             chip.className = `filter-chip ${activeCategory === cat ? 'active' : ''}`;
-            chip.innerText = `${index + 1}. ${cat}`;
+            const rank = categoryRanks[cat] || 0;
+            chip.innerText = `${rank}. ${cat}`;
             chip.addEventListener('click', () => { activeCategory = cat; renderLocalChips(); applyFilters(); });
             filterContainer.appendChild(chip);
         });
@@ -175,9 +180,10 @@ const renderTable = (dataToRender) => {
         let strHash = 0; for(let i=0; i<t.category.length; i++) strHash = t.category.charCodeAt(i) + ((strHash << 5) - strHash);
         const hue = Math.abs(strHash % 360);
         
+        const rank = categoryRanks[t.category] || 0;
         tr.innerHTML = `
             <td>${t.date}</td>
-            <td><span class="cat-badge" style="background: hsla(${hue}, 70%, 50%, 0.15); color: hsla(${hue}, 80%, 75%, 1);" onclick="setCategoryAndFilter('${t.category}')">${t.category}</span></td>
+            <td><span class="cat-badge" style="background: hsla(${hue}, 70%, 50%, 0.15); color: hsla(${hue}, 80%, 75%, 1);" onclick="setCategoryAndFilter('${t.category}')">${rank}. ${t.category}</span></td>
             <td>${t.name}</td>
             <td class="amt-cell">${formatCurrency(t.amount)}</td>
             <td style="text-align: center;">
