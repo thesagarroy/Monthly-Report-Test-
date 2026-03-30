@@ -120,7 +120,9 @@ const renderCharts = (categoryMap, dateMap) => {
 
 const renderChipsAndTable = (categoryMap) => {
     const filterContainer = document.getElementById('category-filters');
-    const categories = Object.keys(categoryMap).sort();
+    
+    // Sort categories by total amount descending
+    const categories = Object.keys(categoryMap).sort((a,b) => categoryMap[b] - categoryMap[a]);
     
     // Update Datalist for Form Dropdown
     const dataList = document.getElementById('categoryOptions');
@@ -141,10 +143,10 @@ const renderChipsAndTable = (categoryMap) => {
         allChip.addEventListener('click', () => { activeCategory = null; renderLocalChips(); applyFilters(); });
         filterContainer.appendChild(allChip);
 
-        categories.forEach(cat => {
+        categories.forEach((cat, index) => {
             const chip = document.createElement('div');
             chip.className = `filter-chip ${activeCategory === cat ? 'active' : ''}`;
-            chip.innerText = cat;
+            chip.innerText = `${index + 1}. ${cat}`;
             chip.addEventListener('click', () => { activeCategory = cat; renderLocalChips(); applyFilters(); });
             filterContainer.appendChild(chip);
         });
