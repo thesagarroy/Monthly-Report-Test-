@@ -4,7 +4,11 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
+$type = isset($_GET['type']) ? $_GET['type'] : 'expenses';
 $dataFile = 'data.json';
+if ($type === 'sales') {
+    $dataFile = 'sales_data.json';
+}
 
 // Handle POST request (Save Data)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -34,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } else {
         http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "Could not open data.json for writing."]);
+        echo json_encode(["status" => "error", "message" => "Could not open file for writing."]);
     }
     exit;
 }

@@ -23,7 +23,7 @@ window.switchView = (view) => {
     
     document.getElementById('expenses-view').style.display = (view === 'expenses') ? 'flex' : 'none';
     document.getElementById('sales-view').style.display = (view === 'sales') ? 'flex' : 'none';
-    document.getElementById('addBtn').style.display = (view === 'expenses') ? 'flex' : 'none';
+    document.getElementById('addBtn').style.display = 'flex'; // always show the button now that both support CRUD
 
     if (view === 'sales' && !isSalesLoaded) {
         fetchSalesData();
@@ -33,7 +33,11 @@ window.switchView = (view) => {
 const fetchSalesData = async () => {
     try {
         const response = await fetch('sales_data.json');
-        salesData = await response.json();
+        let rawData = await response.json();
+        salesData = rawData.map((s, index) => ({
+            ...s,
+            id: s.id || `idx_sales_${index}_${Date.now()}`
+        }));
         isSalesLoaded = true;
         processSalesAndRender();
     } catch (e) {
@@ -138,6 +142,61 @@ const processSalesAndRender = () => {
 
     renderBrandGroup('BIPRAJ', 'fas fa-tint', '#3b82f6');
     renderBrandGroup('BISLAIM', 'fas fa-bottle-water', '#2ecc71');
+    
+    // Build Customer dropdown datalist dynamically
+    const salesCustomerList = document.getElementById('customerOptions');
+    if (salesCustomerList) {
+        salesCustomerList.innerHTML = '';
+        Object.keys(customerMap).forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c;
+            salesCustomerList.appendChild(opt);
+        });
+    }
+
+    // Process and render the Sales Transactions Table
+    const salesTableBody = document.getElementById('sales-table-body');
+    if (salesTableBody) {
+        salesTableBody.innerHTML = '';
+        
+        // Helper to parse dates securely for sorting
+        const parseDate = (dateStr) => {
+            const parts = String(dateStr).replace(/[/]/g, '-').split('-');
+            if (parts.length === 3) return new Date(parts[2], parts[1] - 1, parts[0]).getTime();
+            return 0;
+        };
+
+        const sortedSales = [...salesData].sort((a, b) => parseDate(b.date) - parseDate(a.date));
+
+        sortedSales.forEach(s => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${s.date}</td>
+                <td><span style="font-weight: 500;">${s.customer}</span></td>
+                <td style="color: var(--text-muted);">${s.product}</td>
+                <td style="text-align: center;">${s.quantity}</td>
+                <td class="amt-cell" style="text-align: right;">${formatCurrency(s.amount)}</td>
+                <td style="text-align: center;">
+                    <button class="action-btn btn-edit" onclick="openSalesModal('edit', '${s.id}')" title="Edit"><i class="fas fa-edit"></i></button>
+                    <button class="action-btn btn-delete" onclick="deleteSale('${s.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+                </td>
+            `;
+            salesTableBody.appendChild(tr);
+        });
+    }
+    
+    // Reattach search filter logic for Sales Table
+    const searchSalesInput = document.getElementById('searchSalesInput');
+    if(searchSalesInput) {
+        searchSalesInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const rows = salesTableBody.getElementsByTagName('tr');
+            for(let row of rows) {
+                if(row.innerText.toLowerCase().includes(term)) row.style.display = '';
+                else row.style.display = 'none';
+            }
+        });
+    }
 };
 
 const fetchData = async () => {
@@ -327,10 +386,20 @@ window.setCategoryAndFilter = (cat) => {
     processAndRender(); 
 };
 
-// --- CRUD MODAL LOGIC & POST API ---
+window.openCurrentModal = () => {
+    if (currentView === 'expenses') {
+        openModal('add');
+    } else {
+        openSalesModal('add');
+    }
+};
+
+// --- CRUD MODAL LOGIC & POST API FOR EXPENSES ---
 const setupEventListeners = () => {
     document.getElementById('searchInput').addEventListener('input', applyFilters);
     document.getElementById('expenseForm').addEventListener('submit', saveExpense);
+    const sf = document.getElementById('salesForm');
+    if(sf) sf.addEventListener('submit', saveSale);
 };
 
 window.openModal = (mode, id = null) => {
@@ -422,6 +491,114 @@ const saveToServer = async () => {
         const result = await response.json();
         if(result.status === 'success') {
             processAndRender();
+            return true;
+        } else {
+            alert('Failed to save to server: ' + result.message);
+            return false;
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Server connection error. Could not save.');
+        return false;
+    }
+};
+
+// --- CRUD MODAL LOGIC FOR SALES ---
+
+window.openSalesModal = (mode, id = null) => {
+    const modal = document.getElementById('salesModal');
+    const form = document.getElementById('salesForm');
+    form.reset();
+    document.getElementById('editSalesIndex').value = '';
+    
+    if (mode === 'add') {
+        document.getElementById('salesModalTitle').innerText = 'Add Sale';
+        const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+        const localISOTime = (new Date(Date.now() - tzoffset)).toISOString().slice(0, 10);
+        document.getElementById('salesDateInput').value = localISOTime;
+    } else if (mode === 'edit') {
+        document.getElementById('salesModalTitle').innerText = 'Edit Sale';
+        const s = salesData.find(x => x.id === id);
+        if (s) {
+            document.getElementById('editSalesIndex').value = id;
+            document.getElementById('salesCustomerInput').value = s.customer;
+            document.getElementById('salesProductInput').value = s.product;
+            document.getElementById('salesQtyInput').value = s.quantity;
+            document.getElementById('salesAmountInput').value = parseFloat(s.amount);
+            
+            // Format Date safely
+            let dateVal = s.date;
+            try {
+                const parts = dateVal.replace(/[/]/g, '-').split('-');
+                if(parts.length === 3) dateVal = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            } catch(e){}
+            document.getElementById('salesDateInput').value = dateVal;
+        }
+    }
+    
+    modal.classList.add('active');
+};
+
+window.closeSalesModal = () => {
+    document.getElementById('salesModal').classList.remove('active');
+};
+
+window.deleteSale = async (id) => {
+    if (confirm("Are you sure you want to delete this sales record?")) {
+        const prevSales = [...salesData]; 
+        salesData = salesData.filter(s => s.id !== id);
+        const success = await saveSalesToServer();
+        if(!success) {
+            salesData = prevSales;
+        } else {
+            processSalesAndRender();
+        }
+    }
+};
+
+const saveSale = async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('editSalesIndex').value;
+    const rawDate = document.getElementById('salesDateInput').value;
+    const parts = rawDate.split('-');
+    const formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+    
+    const customer = document.getElementById('salesCustomerInput').value.trim();
+    const product = document.getElementById('salesProductInput').value;
+    const quantity = parseFloat(document.getElementById('salesQtyInput').value);
+    const amount = parseFloat(document.getElementById('salesAmountInput').value);
+    
+    const saleObj = { date: formattedDate, customer, product, quantity, amount };
+    
+    const prevSales = [...salesData];
+
+    if (id) {
+        const idx = salesData.findIndex(s => s.id === id);
+        if (idx > -1) {
+            salesData[idx] = { ...salesData[idx], ...saleObj };
+        }
+    } else {
+        saleObj.id = `idx_sales_new_${Date.now()}`;
+        salesData.push(saleObj);
+    }
+    
+    closeSalesModal();
+    const success = await saveSalesToServer();
+    if(!success) {
+        salesData = prevSales;
+    }
+    processSalesAndRender();
+};
+
+const saveSalesToServer = async () => {
+    try {
+        const response = await fetch('api.php?type=sales', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(salesData, null, 2)
+        });
+        const result = await response.json();
+        if(result.status === 'success') {
             return true;
         } else {
             alert('Failed to save to server: ' + result.message);

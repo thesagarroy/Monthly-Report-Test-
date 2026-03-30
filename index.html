@@ -171,11 +171,37 @@
                     </div>
                 </div>
             </div>
+            </div>
+            
+            <!-- Sales Transactions Table -->
+            <div class="card table-card" style="margin-top: 2rem;">
+                <div class="card-header">
+                    <h3><i class="fas fa-list"></i> Recent Sales Transactions</h3>
+                    <input type="text" id="searchSalesInput" placeholder="Search sales..." class="search-input">
+                </div>
+                <div class="table-responsive">
+                    <table id="salesTransactionsTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Customer Name</th>
+                                <th>Product Name</th>
+                                <th>Qty</th>
+                                <th>Amount (₹)</th>
+                                <th style="width: 80px; text-align: center;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sales-table-body">
+                            <!-- Data will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div> <!-- End of Sales View -->
     </div>
 
     <!-- Floating Add Button -->
-    <button class="fab-btn" id="addBtn" onclick="openModal('add')">
+    <button class="fab-btn" id="addBtn" onclick="openCurrentModal()">
         <i class="fas fa-plus"></i>
     </button>
 
@@ -222,8 +248,72 @@
         </div>
     </div>
 
+    <!-- Add/Edit Sales Modal -->
+    <div id="salesModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="salesModalTitle">Add Sale</h2>
+                <button class="close-btn" onclick="closeSalesModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-content">
+                <form id="salesForm">
+                    <input type="hidden" id="editSalesIndex" value="">
+                    
+                    <div class="form-group">
+                        <label for="salesDateInput">Date</label>
+                        <input type="date" id="salesDateInput" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="salesCustomerInput">Customer Name</label>
+                        <input type="text" id="salesCustomerInput" list="customerOptions" placeholder="E.g., Priyanshu Mistanno Vander" required autocomplete="off">
+                        <datalist id="customerOptions">
+                            <!-- Populated dynamically -->
+                        </datalist>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="salesProductInput">Product Name</label>
+                        <select id="salesProductInput" required>
+                            <option value="" disabled selected>Select a Product</option>
+                            <optgroup label="BIPRAJ Water">
+                                <option value="BIPRAJ 300 ML SQUARE">BIPRAJ 300 ML SQUARE</option>
+                                <option value="BIPRAJ 500 ML SQUARE">BIPRAJ 500 ML SQUARE</option>
+                                <option value="BIPRAJ 500 ML ROUND">BIPRAJ 500 ML ROUND</option>
+                                <option value="BIPRAJ 1 LTR SQUARE">BIPRAJ 1 LTR SQUARE</option>
+                                <option value="BIPRAJ 20 LTR WATER">BIPRAJ 20 LTR WATER</option>
+                            </optgroup>
+                            <optgroup label="BISLAIM Water">
+                                <option value="BISLAIM 500 ML ROUND">BISLAIM 500 ML ROUND</option>
+                                <option value="BISLAIM 1 LTR ROUND">BISLAIM 1 LTR ROUND</option>
+                                <option value="BISLAIM 2 LTR ROUND">BISLAIM 2 LTR ROUND</option>
+                                <option value="BISLAIM 5 LTR ROUND">BISLAIM 5 LTR ROUND</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="display: flex; gap: 1rem;">
+                        <div style="flex: 1;">
+                            <label for="salesQtyInput">Quantity</label>
+                            <input type="number" id="salesQtyInput" placeholder="Enter Qty" required min="1" step="0.1">
+                        </div>
+                        <div style="flex: 1;">
+                            <label for="salesAmountInput">Amount (₹)</label>
+                            <input type="number" id="salesAmountInput" placeholder="Enter amount" required min="0" step="0.01">
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" onclick="closeSalesModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Sale</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Logic -->
     <!-- Removed data.js import since we fetch from api.php -->
-    <script src="dashboard.js?v=2.4"></script>
+    <script src="dashboard.js?v=3.0"></script>
 </body>
 </html>
