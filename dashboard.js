@@ -249,6 +249,9 @@ const processAndRender = () => {
     const categoryMap = {};
     const dateMap = {};
 
+    // Pre-seed default categories to ensure they appear even if 0
+    categoryMap['Utility Bill'] = 0;
+
     transactions.forEach(t => {
         const amt = parseFloat(t.amount) || 0; // robust parsing
         totalAmount += amt;
